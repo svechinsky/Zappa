@@ -111,10 +111,11 @@ class LambdaHandler(object):
                 try:
                     from ctypes import cdll, util
                     for library in included_libraries:
+                        logger.info("Loading lib %s at time", library)
                         try:
                             cdll.LoadLibrary(os.path.join(os.getcwd(), library))
                         except OSError:
-                            print ("Failed to find library...right filename?")
+                            print ("Failed to find library {} ...right filename?".format(library))
                 except ImportError:
                     print ("Failed to import cytpes library")
 
