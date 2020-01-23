@@ -66,21 +66,26 @@ class LambdaHandler(object):
         # We haven't cached our settings yet, load the settings and app.
         if not self.settings:
             # Loading settings from a python module
+            logger.info("Beginning app import")
             self.settings = importlib.import_module(settings_name)
             self.settings_name = settings_name
             self.session = session
+            logger.info("App import finished")
 
             # Custom log level
             if self.settings.LOG_LEVEL:
                 level = logging.getLevelName(self.settings.LOG_LEVEL)
                 logger.setLevel(level)
 
+            logger.info("Beginning remote env fetch")
+
             remote_env = getattr(self.settings, 'REMOTE_ENV', None)
             remote_bucket, remote_file = parse_s3_url(remote_env)
 
             if remote_bucket and remote_file:
                 self.load_remote_settings(remote_bucket, remote_file)
-
+            logger.info("Finished remote env fetch")
+            
             # Let the system know that this will be a Lambda/Zappa/Stack
             os.environ["SERVERTYPE"] = "AWS Lambda"
             os.environ["FRAMEWORK"] = "Zappa"
@@ -96,11 +101,13 @@ class LambdaHandler(object):
             for key in self.settings.ENVIRONMENT_VARIABLES.keys():
                 os.environ[str(key)] = self.settings.ENVIRONMENT_VARIABLES[key]
 
+            logger.info("Pulling archive from S3")
             # Pulling from S3 if given a zip path
             project_archive_path = getattr(self.settings, 'ARCHIVE_PATH', None)
             if project_archive_path:
                 self.load_remote_project_archive(project_archive_path)
 
+            logger.info("Finished archive from S3")
 
             # Load compiled library to the PythonPath
             # checks if we are the slim_handler since this is not needed otherwise
